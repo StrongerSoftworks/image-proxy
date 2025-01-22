@@ -15,12 +15,57 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	// Extract query parameters
 	imgPath := request.QueryStringParameters["img"]
-	width, _ := strconv.Atoi(request.QueryStringParameters["width"])
-	height, _ := strconv.Atoi(request.QueryStringParameters["height"])
+	widthQuery := request.QueryStringParameters["width"]
+	heightQuery := request.QueryStringParameters["height"]
 	aspectRatioQuery := request.QueryStringParameters["aspect-ratio"]
-	mode := request.QueryStringParameters["mode"]
+	modeQuery := request.QueryStringParameters["mode"]
 	formatQuery := request.QueryStringParameters["format"]
-	quality, _ := strconv.Atoi(request.QueryStringParameters["quality"])
+	qualityQuery := request.QueryStringParameters["quality"]
+
+	width := 0
+	height := 0
+	quality := 100
+	mode := "fit"
+
+	// Validate options
+	var aspectRatio float32 = 0.0
+	if aspectRatioQuery != "" {
+		ratio, found := transformations.AspectRatioToFloat(aspectRatioQuery)
+		if found {
+			aspectRatio = ratio
+		}
+	}
+
+	if widthQuery != "" {
+		var err error
+		width, err = strconv.Atoi(widthQuery)
+		if err != nil {
+			log.Printf("Invalid width: %v", width)
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, nil
+		}
+	}
+
+	if heightQuery != "" {
+		var err error
+		height, err = strconv.Atoi(heightQuery)
+		if err != nil {
+			log.Printf("Invalid height: %v", height)
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, nil
+		}
+	}
+
+	if modeQuery != "" {
+		mode = modeQuery
+	}
+
+	if qualityQuery != "" {
+		var err error
+		quality, err = strconv.Atoi(qualityQuery)
+		if err != nil || quality < 0 || quality > 100 {
+			log.Printf("Invalid quality: %v", quality)
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, nil
+		}
+	}
 
 	// get the image
 	resp, err := http.Get(imgPath)
@@ -40,15 +85,6 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		log.Printf("Failed to decode image: %v", err)
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest}, nil
-	}
-
-	// Validate options
-	var aspectRatio float32 = 0.0
-	if aspectRatioQuery != "" {
-		ratio, found := transformations.AspectRatio(aspectRatioQuery)
-		if found {
-			aspectRatio = ratio
-		}
 	}
 
 	if formatQuery != "" {

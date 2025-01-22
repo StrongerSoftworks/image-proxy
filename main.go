@@ -82,7 +82,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	var aspectRatio float32 = 0.0
 	if aspectRatioQuery != "" {
-		ratio, found := transformations.AspectRatio(aspectRatioQuery)
+		ratio, found := transformations.AspectRatioToFloat(aspectRatioQuery)
 		if found {
 			aspectRatio = ratio
 		}

@@ -44,7 +44,7 @@ func validateMode(mode string) bool {
 	return validModes[mode]
 }
 
-func AspectRatio(aspectRatio string) (float32, bool) {
+func AspectRatioToFloat(aspectRatio string) (float32, bool) {
 	ratio, exists := aspectRatios[aspectRatio]
 	return ratio, exists
 }
