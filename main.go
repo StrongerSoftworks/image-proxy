@@ -10,27 +10,20 @@ import (
 	"github.com/StrongerSoftworks/image-resizer/transformations"
 )
 
-type Response struct {
-	Width       int    `json:"width"`
-	Height      int    `json:"height"`
-	AspectRatio string `json:"aspect_ratio"`
-	Extension   string `json:"extension"`
-	Quality     int    `json:"quality"`
-	Message     string `json:"message"`
-}
-
 func handler(w http.ResponseWriter, r *http.Request) {
 
 	imgPath := r.URL.Query().Get("img")
 	widthStr := r.URL.Query().Get("width")
 	heightStr := r.URL.Query().Get("height")
 	aspectRatioQuery := r.URL.Query().Get("aspect-ratio")
-	format := r.URL.Query().Get("format")
+	modeQuery := r.URL.Query().Get("mode")
+	formatQuery := r.URL.Query().Get("format")
 	qualityStr := r.URL.Query().Get("quality")
 
 	width := 0
 	height := 0
 	quality := 100
+	mode := "fit"
 
 	// get the image
 	resp, err := http.Get(imgPath)
@@ -46,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode the image
-	img, _, err := image.Decode(resp.Body)
+	img, format, err := image.Decode(resp.Body)
 	if err != nil {
 		fmt.Printf("Failed to decode image: %v\n", err)
 		return
@@ -56,7 +49,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		width, err = strconv.Atoi(widthStr)
 		if err != nil {
-			http.Error(w, "Invalid or missing width", http.StatusBadRequest)
+			http.Error(w, "Invalid width", http.StatusBadRequest)
 			return
 		}
 	}
@@ -65,28 +58,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		height, err = strconv.Atoi(heightStr)
 		if err != nil {
-			http.Error(w, "Invalid or missing height", http.StatusBadRequest)
+			http.Error(w, "Invalid height", http.StatusBadRequest)
 			return
 		}
 	}
 
-	if format != "" {
-		if !transformations.ValidateFormat(format) {
-			http.Error(w, "Invalid or missing extension", http.StatusBadRequest)
-			return
-		}
+	if formatQuery != "" {
+		format = formatQuery
+	}
+
+	if modeQuery != "" {
+		mode = modeQuery
 	}
 
 	if qualityStr != "" {
 		var err error
 		quality, err = strconv.Atoi(qualityStr)
 		if err != nil || quality < 0 || quality > 100 {
-			http.Error(w, "Invalid or missing quality", http.StatusBadRequest)
+			http.Error(w, "Invalid quality", http.StatusBadRequest)
 			return
 		}
 	}
 
-	var aspectRatio = 0.0
+	var aspectRatio float32 = 0.0
 	if aspectRatioQuery != "" {
 		ratio, found := transformations.AspectRatio(aspectRatioQuery)
 		if found {
@@ -95,16 +89,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Apply transformations
-	imgData, err := transformations.TransformImage(img, width, height, aspectRatio, quality, format)
+	imgData, err := transformations.TransformImage(img, &transformations.Options{Width: width, Height: height, AspectRatio: aspectRatio, Mode: mode, Quality: quality, Format: format})
 	if err != nil {
 		log.Printf("Could not apply transformations to image: %v", err)
 		http.Error(w, fmt.Sprintf("Could not apply transformations to image: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	contentType := http.DetectContentType(imgData.Bytes())
+	if format == "avif" {
+		contentType = "image/avif"
+	}
+
 	headers := map[string]string{
-		"Content-Type":  http.DetectContentType(imgData.Bytes()),
-		"Cache-Control": "public, max-age=604800", // Cache for 7 days
+		"Content-Type": contentType,
+		// "Cache-Control": "public, max-age=604800", // Cache for 7 days
 	}
 	for key, value := range headers {
 		w.Header().Set(key, value)

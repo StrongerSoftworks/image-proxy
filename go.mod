@@ -10,6 +10,9 @@ require (
 )
 
 require (
+	github.com/ebitengine/purego v0.8.1 // indirect
+	github.com/gen2brain/avif v0.4.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/tetratelabs/wazero v1.8.1 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 )
