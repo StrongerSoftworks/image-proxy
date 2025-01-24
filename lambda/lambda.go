@@ -17,7 +17,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	imgPath := request.QueryStringParameters["img"]
 	widthQuery := request.QueryStringParameters["width"]
 	heightQuery := request.QueryStringParameters["height"]
-	aspectRatioQuery := request.QueryStringParameters["aspect-ratio"]
+	aspectRatioQuery := request.QueryStringParameters["ratio"]
 	modeQuery := request.QueryStringParameters["mode"]
 	formatQuery := request.QueryStringParameters["format"]
 	qualityQuery := request.QueryStringParameters["quality"]

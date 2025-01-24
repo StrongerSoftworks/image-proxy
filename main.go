@@ -15,7 +15,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	imgPath := r.URL.Query().Get("img")
 	widthStr := r.URL.Query().Get("width")
 	heightStr := r.URL.Query().Get("height")
-	aspectRatioQuery := r.URL.Query().Get("aspect-ratio")
+	aspectRatioQuery := r.URL.Query().Get("ratio")
 	modeQuery := r.URL.Query().Get("mode")
 	formatQuery := r.URL.Query().Get("format")
 	qualityStr := r.URL.Query().Get("quality")
@@ -102,8 +102,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	headers := map[string]string{
-		"Content-Type": contentType,
-		// "Cache-Control": "public, max-age=604800", // Cache for 7 days
+		"Content-Type":  contentType,
+		"Cache-Control": "public, max-age=604800", // Cache for 7 days
 	}
 	for key, value := range headers {
 		w.Header().Set(key, value)
@@ -116,7 +116,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/process", handler)
+	http.HandleFunc("/proxy", handler)
 	fmt.Println("Server is running on port 8080...")
 	http.ListenAndServe(":8080", nil)
 }
