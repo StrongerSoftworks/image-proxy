@@ -1,4 +1,4 @@
-module github.com/StrongerSoftworks/image-resizer
+module github.com/StrongerSoftworks/image-proxy
 
 go 1.23.5
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/StrongerSoftworks/image-resizer/transformations"
+	"github.com/StrongerSoftworks/image-proxy/transformations"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {

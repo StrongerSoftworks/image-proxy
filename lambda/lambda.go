@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/StrongerSoftworks/image-resizer/transformations"
+	"github.com/StrongerSoftworks/image-proxy/transformations"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
