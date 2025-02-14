@@ -27,7 +27,7 @@ RUN go mod download
 # Copy the rest of the application source code
 COPY ./cmd/api /app/cmd/api
 COPY ./internal /app/internal
-COPY .env.development .env.production /app/
+COPY ./cmd/api/.env.development ./cmd/api/.env.production /app/
 
 # Build the Go application
 RUN env GOOS=linux GOARCH=amd64 go build -o main cmd/api/main.go

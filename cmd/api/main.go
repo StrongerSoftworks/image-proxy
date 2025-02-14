@@ -114,6 +114,16 @@ func writeFileWithDirs(imgPath string, data []byte, perm os.FileMode) error {
 	return nil
 }
 
+func healthCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/status" {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
 func requestFilterMiddleware(next http.Handler, allowedURLs []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -166,10 +176,11 @@ func main() {
 	// Read environment variables
 	allowedURLs := os.Getenv("ALLOWED_ORIGINS")
 
+	log.Println("Images will be saved to " + imageBasePath())
+	log.Println("Allowed domains: " + allowedURLs)
+	log.Println("Server is running on port 8080...")
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/proxy", handler)
-
-	log.Println("Images will be saved to " + imageBasePath())
-	log.Println("Server is running on port 8080...")
-	http.ListenAndServe(":8080", requestFilterMiddleware(mux, strings.Split(allowedURLs, ",")))
+	http.ListenAndServe(":8080", healthCheckMiddleware(requestFilterMiddleware(mux, strings.Split(allowedURLs, ","))))
 }
