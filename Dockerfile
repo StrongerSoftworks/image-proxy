@@ -1,4 +1,4 @@
-FROM amazonlinux:latest
+FROM amazonlinux:2023 AS builder
 
 # Install dependencies
 RUN yum update -y && yum install -y \
@@ -31,6 +31,17 @@ COPY .env.development .env.production /app/
 
 # Build the Go application
 RUN env GOOS=linux GOARCH=amd64 go build -o main cmd/api/main.go
+
+# Stage 2: Create a minimal runtime image
+FROM amazonlinux:2023
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/main .
+COPY --from=builder /app/.env.development .
+COPY --from=builder /app/.env.production .
 
 # Expose port 8080 for incoming requests
 EXPOSE 8080
