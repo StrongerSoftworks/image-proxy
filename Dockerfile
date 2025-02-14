@@ -1,0 +1,39 @@
+FROM amazonlinux:latest
+
+# Install dependencies
+RUN yum update -y && yum install -y \
+    gcc \
+    gcc-c++ \
+    make \
+    tar \
+    gzip \
+    git \
+    wget \
+    && yum clean all
+RUN wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+RUN tar -xvf go1.24.0.linux-amd64.tar.gz
+RUN mv go /usr/local
+
+ENV GOROOT=/usr/local/go
+ENV PATH=$PATH:$GOROOT/bin
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the Go module files and download dependencies
+COPY go.mod go.sum  /app/
+RUN go mod download
+
+# Copy the rest of the application source code
+COPY ./cmd/api /app/cmd/api
+COPY ./internal /app/internal
+COPY .env.development .env.production /app/
+
+# Build the Go application
+RUN env GOOS=linux GOARCH=amd64 go build -o main cmd/api/main.go
+
+# Expose port 8080 for incoming requests
+EXPOSE 8080
+
+# Command to run the application
+CMD ["./main"]

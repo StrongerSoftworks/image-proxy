@@ -4,12 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"net/url"
+	"path"
+	"strconv"
 	"strings"
 
 	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 	"github.com/gen2brain/avif"
 )
+
+type Options struct {
+	Width       int
+	Height      int
+	AspectRatio float32
+	Mode        string
+	Quality     int
+	Format      string
+}
 
 const (
 	Crop = "crop"
@@ -36,6 +48,23 @@ func validateFormat(extension string) bool {
 	return validExtensions[extension]
 }
 
+func FormatFromPath(imgURL string) (string, error) {
+	// Parse the URL
+	parsedURL, err := url.Parse(imgURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the file extension
+	extension := strings.TrimPrefix(path.Ext(parsedURL.Path), ".")
+
+	// Validate extension
+	if !validateFormat(extension) {
+		return "", fmt.Errorf("unknown file format: %s", extension)
+	}
+	return extension, nil
+}
+
 func validateMode(mode string) bool {
 	validModes := map[string]bool{
 		"fit":  true,
@@ -49,29 +78,57 @@ func AspectRatioToFloat(aspectRatio string) (float32, bool) {
 	return ratio, exists
 }
 
-type Options struct {
-	Width       int
-	Height      int
-	AspectRatio float32
-	Mode        string
-	Quality     int
-	Format      string
+func ParseOptions(widthQuery string, heightQuery string, formatQuery string, modeQuery string,
+	qualityQuery string, aspectRatioQuery string, options *Options) error {
+	if widthQuery != "" {
+		var err error
+		options.Width, err = strconv.Atoi(widthQuery)
+		if err != nil {
+			return fmt.Errorf("invalid width: %d. %s", options.Width, err)
+		}
+	}
+
+	if heightQuery != "" {
+		var err error
+		options.Height, err = strconv.Atoi(heightQuery)
+		if err != nil {
+			return fmt.Errorf("invalid height: %d. %s", options.Height, err)
+		}
+	}
+
+	if formatQuery != "" {
+		if !validateFormat(formatQuery) {
+			return fmt.Errorf("invalid extension: %s", formatQuery)
+		}
+		options.Format = formatQuery
+	}
+
+	if modeQuery != "" {
+		if !validateMode(modeQuery) {
+			return fmt.Errorf("invalid mode: %s", modeQuery)
+		}
+		options.Mode = modeQuery
+	}
+
+	if qualityQuery != "" {
+		var err error
+		options.Quality, err = strconv.Atoi(qualityQuery)
+		if err != nil || options.Quality < 0 || options.Quality > 100 {
+			return fmt.Errorf("invalid quality: %d. %s", options.Quality, err)
+		}
+	}
+
+	if aspectRatioQuery != "" {
+		ratio, found := AspectRatioToFloat(aspectRatioQuery)
+		if found {
+			options.AspectRatio = ratio
+		}
+	}
+
+	return nil
 }
 
 func TransformImage(img image.Image, options *Options) (*bytes.Buffer, error) {
-	// Validate options
-	if options.Format != "" {
-		if !validateFormat(options.Format) {
-			return nil, fmt.Errorf("invalid extension: %s", options.Format)
-		}
-	}
-
-	if options.Mode != "" {
-		if !validateMode(options.Mode) {
-			return nil, fmt.Errorf("invalid mode: %s", options.Mode)
-		}
-	}
-
 	// Apply transformations
 	if options.AspectRatio != 0 {
 		if options.Width == 0 && options.Height == 0 {
@@ -113,7 +170,7 @@ func TransformImage(img image.Image, options *Options) (*bytes.Buffer, error) {
 	case "jpeg", "jpg":
 		err = imaging.Encode(&buf, img, imaging.JPEG, imaging.JPEGQuality(qualityPercent))
 	case "png":
-		err = imaging.Encode(&buf, img, imaging.PNG) // TODO quality on PNG?
+		err = imaging.Encode(&buf, img, imaging.PNG)
 	case "webp":
 		err = webp.Encode(&buf, img, &webp.Options{Lossless: true, Quality: float32(qualityPercent), Exact: true})
 	case "avif":
