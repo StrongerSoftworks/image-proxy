@@ -2,6 +2,9 @@ FROM golang:1.24 AS builder
 
 WORKDIR /app
 
+# Install Delve
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
 # Copy the Go module files and download dependencies
 COPY go.mod go.sum  /app/
 RUN go mod download
@@ -21,9 +24,13 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env.development .
 COPY --from=builder /app/.env.production .
+COPY --from=builder /go/bin/dlv /usr/local/bin/dlv
 
-# Expose port 8080 for incoming requests
+# Expose the Delve debugging port
+EXPOSE 40000
+
+# API Port
 EXPOSE 8080
 
-# Command to run the application
-CMD ["./main"]
+# Run Delve in headless mode
+CMD ["dlv", "exec", "./main", "--headless", "--listen=:40000", "--api-version=2", "--accept-multiclient", "--allow-non-terminal-interactive=true"]

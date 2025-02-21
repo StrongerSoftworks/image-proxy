@@ -1,9 +1,17 @@
 # image-proxy
 
-# Build Container For Release
+# Build Container
+
+## For Release
 
 ```
 docker buildx build -t image-proxy -f Dockerfile .
+```
+
+## For Debug
+
+```
+docker buildx build -t image-proxy-debug -f DockerfileDebug .
 ```
 
 # Run Container
@@ -28,10 +36,38 @@ docker run \
   -d image-proxy
 ```
 
-# Tag and Push Container
+## Development Debug
 
 ```
-docker tag image-proxy:latest image-proxy:0.0.0
+docker run \
+  -e GO_ENV=development \
+  -p 40000:40000 \
+  -p 8080:8080 \
+  --name image-proxy-debug.development \
+  -d image-proxy-debug
+```
+
+## Production Debug
+
+```
+docker run \
+  -e GO_ENV=production \
+  -p 40000:40000 \
+  -p 8080:8080 \
+  --name image-proxy-debug.production \
+  -d image-proxy-debug
+```
+
+# Tag and Push Container
+
+## Production
+
+```
 aws lightsail push-container-image --profile calculator --region ca-central-1 --service-name image-proxy --label image-proxy --image image-proxy:latest
-aws lightsail push-container-image --profile calculator --region ca-central-1 --service-name image-proxy --label image-proxy --image image-proxy:0.0.0
+```
+
+## Production Debug
+
+```
+aws lightsail push-container-image --profile calculator --region ca-central-1 --service-name image-proxy --label image-proxy --image image-proxy-debug:latest
 ```
