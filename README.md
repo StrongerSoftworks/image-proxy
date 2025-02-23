@@ -22,7 +22,7 @@ docker buildx build -t image-proxy-debug -f DockerfileDebug .
 docker run \
   -e GO_ENV=development \
   -p 8080:8080 \
-  --name image-proxy.development \
+  --name image-proxy-development \
   -d image-proxy
 ```
 
@@ -32,7 +32,7 @@ docker run \
 docker run \
   -e GO_ENV=production \
   -p 8080:8080 \
-  --name image-proxy.production \
+  --name image-proxy-production \
   -d image-proxy
 ```
 
@@ -43,7 +43,7 @@ docker run \
   -e GO_ENV=development \
   -p 40000:40000 \
   -p 8080:8080 \
-  --name image-proxy-debug.development \
+  --name image-proxy-debug-development \
   -d image-proxy-debug
 ```
 
@@ -54,7 +54,7 @@ docker run \
   -e GO_ENV=production \
   -p 40000:40000 \
   -p 8080:8080 \
-  --name image-proxy-debug.production \
+  --name image-proxy-debug-production \
   -d image-proxy-debug
 ```
 
@@ -64,10 +64,4 @@ docker run \
 
 ```
 aws lightsail push-container-image --profile calculator --region ca-central-1 --service-name image-proxy --label image-proxy --image image-proxy:latest
-```
-
-## Production Debug
-
-```
-aws lightsail push-container-image --profile calculator --region ca-central-1 --service-name image-proxy --label image-proxy --image image-proxy-debug:latest
 ```
