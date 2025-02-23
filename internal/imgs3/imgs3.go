@@ -5,17 +5,29 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/StrongerSoftworks/image-proxy/internal/imghttp"
 	"github.com/StrongerSoftworks/image-proxy/internal/transformations"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
+
+// retrieves the bucket name from environment variables
+func GetBucketName() string {
+	bucket := os.Getenv("S3_BUCKET")
+	if bucket == "" {
+		log.Fatal("S3_BUCKET environment variable is not set")
+	}
+	return bucket
+}
 
 func MakeBucketFileKey(imgPath string, options *transformations.Options) string {
 	transformedFileName := fmt.Sprintf("%s.%s", strings.TrimSuffix(filepath.Base(imgPath), filepath.Ext(imgPath)), options.Format)
@@ -69,4 +81,13 @@ func UploadImage(ctx context.Context, uploader *manager.Uploader, bucket, key st
 		ContentType: aws.String(imghttp.ContentType(filepath.Ext(key), imgData)),
 	})
 	return err
+}
+
+func InitAWS(ctx context.Context) *s3.Client {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
+	if err != nil {
+		log.Fatalf("unable to load AWS SDK config, %v", err)
+	}
+	s3Client := s3.NewFromConfig(cfg)
+	return s3Client
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/StrongerSoftworks/image-proxy/internal/imghttp"
 	"github.com/StrongerSoftworks/image-proxy/internal/imgs3"
@@ -23,7 +22,7 @@ func main() {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	// Set up AWS connections
-	bucket := getBucketName()
+	bucket := imgs3.GetBucketName()
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -108,13 +107,4 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		// IsBase64Encoded: true,
 	}, nil
 
-}
-
-// retrieves the bucket name from environment variables
-func getBucketName() string {
-	bucket := os.Getenv("S3_BUCKET_NAME")
-	if bucket == "" {
-		log.Fatal("S3_BUCKET_NAME environment variable is not set")
-	}
-	return bucket
 }
