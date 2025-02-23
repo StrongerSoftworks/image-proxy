@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +30,7 @@ func GetBucketName() string {
 
 func MakeBucketFileKey(imgPath string, options *transformations.Options) string {
 	transformedFileName := fmt.Sprintf("%s.%s", strings.TrimSuffix(filepath.Base(imgPath), filepath.Ext(imgPath)), options.Format)
-	return fmt.Sprintf("%s/%s/%d/%d/%f/%d/%s", url.PathEscape(imgPath), options.Mode, options.Width, options.Height, options.AspectRatio, options.Quality, transformedFileName)
+	return fmt.Sprintf("%s/%s/%d/%d/%f/%d/%s", trimProtocol(imgPath), options.Mode, options.Width, options.Height, options.AspectRatio, options.Quality, transformedFileName)
 }
 
 // checks if a file exists in the S3 bucket
@@ -90,4 +89,14 @@ func InitAWS(ctx context.Context) *s3.Client {
 	}
 	s3Client := s3.NewFromConfig(cfg)
 	return s3Client
+}
+
+func trimProtocol(url string) string {
+	// Check if the URL starts with "http://" or "https://"
+	if strings.HasPrefix(url, "http://") {
+		return url[len("http://"):] // Trim the "http://"
+	} else if strings.HasPrefix(url, "https://") {
+		return url[len("https://"):] // Trim the "https://"
+	}
+	return url // Return the URL as is if no protocol found
 }

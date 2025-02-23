@@ -16,15 +16,15 @@ import (
 type LocalRequestHandler struct{}
 
 func NewLocalRequestHandler() *LocalRequestHandler {
-	handler := LocalRequestHandler()
+	handler := LocalRequestHandler{}
 	return &handler
 }
 
-func (*LocalRequestHandler) Init() {
+func (handler *LocalRequestHandler) Init() {
 	log.Println("Images will be saved to " + imageBasePath())
 }
 
-func (*LocalRequestHandler) Handler(w http.ResponseWriter, r *http.Request) {
+func (handler *LocalRequestHandler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Extract query parameters
 	imgPath := r.URL.Query().Get("img")
